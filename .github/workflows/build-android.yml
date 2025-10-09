@@ -75,7 +75,9 @@ jobs:
 
     - name: Build with Buildozer
       run: |
+        sudo mv /usr/include/x86_64-linux-gnu /usr/include/x86_64-linux-gnu.bak
         buildozer android debug
+        sudo mv /usr/include/x86_64-linux-gnu.bak /usr/include/x86_64-linux-gnu
 
     - name: List build artifacts
       run: |
