@@ -20,6 +20,7 @@ jobs:
       with:
         python-version: '3.10'
         cache: 'pip'
+
     - name: Install system dependencies
       run: |
         sudo apt-get update
@@ -41,20 +42,10 @@ jobs:
         # Download and extract command line tools
         echo "Downloading command line tools..."
         wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-        
-        # Create and extract to temp directory first
-        mkdir -p temp-cmdline
-        unzip -q cmdline-tools.zip -d temp-cmdline
-        
-        # Move to final location
+        unzip -q cmdline-tools.zip -d cmdline-tools
         mkdir -p cmdline-tools/latest
-        mv temp-cmdline/cmdline-tools/* cmdline-tools/latest/
-        
-        # Clean up
-        rm -rf temp-cmdline cmdline-tools.zip
-        
-        echo "Command line tools installed at:"
-        ls -la cmdline-tools/latest/
+        mv cmdline-tools/cmdline-tools/* cmdline-tools/latest/
+        rm -rf cmdline-tools.zip cmdline-tools/cmdline-tools
         
         # Add to PATH
         export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin
@@ -62,20 +53,42 @@ jobs:
         # Accept licenses
         yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
         
-        # Install required components with specific versions
+        # Install required components
         sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
           "platform-tools" \
           "platforms;android-33" \
           "build-tools;33.0.3" \
           "cmdline-tools;latest" \
           "tools"
-          
+        
+        # Verify build-tools installation
+        echo "=== Verifying build-tools installation ==="
+        BUILD_TOOLS_DIR="$ANDROID_SDK_ROOT/build-tools/33.0.3"
+        if [ -d "$BUILD_TOOLS_DIR" ]; then
+          echo "Build tools found at: $BUILD_TOOLS_DIR"
+          ls -la "$BUILD_TOOLS_DIR"
+        else
+          echo "ERROR: Build tools not found at $BUILD_TOOLS_DIR"
+          echo "Available versions:"
+          ls -la "$ANDROID_SDK_ROOT/build-tools" || echo "No build-tools directory found"
+          exit 1
+        fi
+        
         # Verify AIDL is available
         echo "=== Verifying AIDL installation ==="
-        ls -la $ANDROID_SDK_ROOT/build-tools/*/aidl || echo "AIDL not found!"
+        AIDL_PATH=$(find "$BUILD_TOOLS_DIR" -name aidl | head -n 1)
+        if [ -f "$AIDL_PATH" ]; then
+          echo "AIDL found at: $AIDL_PATH"
+          chmod +x "$AIDL_PATH"
+          echo "AIDL version: $($AIDL_PATH --version || echo 'Could not get version')"
+        else
+          echo "ERROR: AIDL not found in build-tools!"
+          find "$ANDROID_SDK_ROOT" -name aidl || echo "AIDL not found in SDK"
+          exit 1
+        fi
         
         # Ensure build-tools are in PATH
-        export PATH=$PATH:$ANDROID_SDK_ROOT/build-tools/33.0.3
+        export PATH=$PATH:$BUILD_TOOLS_DIR
         
         # Manually download and install NDK 25b
         echo "Downloading NDK 25b..."
@@ -89,15 +102,6 @@ jobs:
         echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
         echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/25b" >> $GITHUB_ENV
         echo "PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_ENV
-        
-        # Verify installation
-        echo "=== Installed Android components ==="
-        ls -la $ANDROID_SDK_ROOT/build-tools/33.0.0
-        echo "=== NDK installation ==="
-        ls -la $ANDROID_SDK_ROOT/ndk/25b
-      env:
-        ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-        ANDROID_HOME: /usr/local/lib/android/sdk
 
     - name: Install Python dependencies
       run: |
@@ -107,7 +111,8 @@ jobs:
     - name: Verify buildozer.spec
       run: |
         echo "=== buildozer.spec ==="
-        echo "\n===================="
+        cat buildozer.spec || echo "No buildozer.spec found"
+        echo "===================="
 
     - name: Build with Buildozer
       run: |
