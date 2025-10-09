@@ -62,12 +62,20 @@ jobs:
         # Accept licenses
         yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
         
-        # Install required components
+        # Install required components with specific versions
         sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
           "platform-tools" \
           "platforms;android-33" \
-          "build-tools;33.0.0" \
-          "cmdline-tools;latest"
+          "build-tools;33.0.3" \
+          "cmdline-tools;latest" \
+          "tools"
+          
+        # Verify AIDL is available
+        echo "=== Verifying AIDL installation ==="
+        ls -la $ANDROID_SDK_ROOT/build-tools/*/aidl || echo "AIDL not found!"
+        
+        # Ensure build-tools are in PATH
+        export PATH=$PATH:$ANDROID_SDK_ROOT/build-tools/33.0.3
         
         # Manually download and install NDK 25b
         echo "Downloading NDK 25b..."
