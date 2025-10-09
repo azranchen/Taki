@@ -26,13 +26,22 @@ requirements = python3,kivy
 android.permissions = WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
 
 # (int) Target Android API, should be as high as possible.
-android.api = 31
+android.api = 33
 
 # (int) Minimum API your APK will support.
 android.minapi = 21
 
 # (int) Android NDK version to use
 android.ndk = 25b
+
+# (str) Android SDK build-tools version to use
+android.build_tools_version = 33.0.3
+
+# (bool) If True, then skip trying to update the Android sdk
+android.skip_update = False
+
+# (bool) If True, then automatically accept SDK license
+android.accept_sdk_license = True
 
 # (bool) Use --private data storage (True) or --dir public storage (False)
 android.private_storage = True
