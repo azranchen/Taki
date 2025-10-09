@@ -40,7 +40,14 @@ jobs:
           gstreamer1.0-plugins-base \
           gstreamer1.0-plugins-good \
           openjdk-17-jdk \
-          unzip
+          unzip \
+          autoconf \
+          automake \
+          libtool \
+          pkg-config \
+          libffi-dev \
+          libssl-dev \
+          libltdl-dev
 
     - name: Install Buildozer
       run: |
