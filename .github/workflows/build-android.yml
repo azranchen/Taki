@@ -20,13 +20,12 @@ jobs:
       with:
         python-version: '3.10'
         cache: 'pip'
-
     - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y git zip unzip openjdk-17-jdk wget
 
-    - name: Set up Android SDK
+    - name: Set up Android SDK and NDK
       run: |
         # Accept licenses
         mkdir -p ~/.android
@@ -40,8 +39,21 @@ jobs:
         $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
           "platform-tools" \
           "platforms;android-33" \
-          "build-tools;33.0.0" \
-          "ndk;25b"
+          "build-tools;33.0.0"
+        
+        # Manually download and install NDK 25b
+        echo "Downloading NDK 25b..."
+        mkdir -p $ANDROID_SDK_ROOT/ndk
+        wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -O ndk.zip
+        unzip -q ndk.zip -d $ANDROID_SDK_ROOT/ndk
+        mv $ANDROID_SDK_ROOT/ndk/android-ndk-r25b $ANDROID_SDK_ROOT/ndk/25b
+        rm ndk.zip
+        
+        echo "NDK installed at $ANDROID_SDK_ROOT/ndk/25b"
+        ls -la $ANDROID_SDK_ROOT/ndk/25b
+      env:
+        ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        ANDROID_HOME: /usr/local/lib/android/sdk
 
     - name: Install Python dependencies
       run: |
@@ -51,7 +63,6 @@ jobs:
     - name: Verify buildozer.spec
       run: |
         echo "=== buildozer.spec ==="
-        cat buildozer.spec
         echo "\n===================="
 
     - name: Build with Buildozer
