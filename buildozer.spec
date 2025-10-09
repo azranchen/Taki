@@ -15,6 +15,15 @@ source.dir = .
 # (list) Source files to include (let empty to include all the files)
 source.include_exts = py,png,jpg,kv,atlas
 
+# (list) Source files to exclude (let empty to not exclude anything)
+source.exclude_exts = spec
+
+# (list) List of directory to exclude (let empty to not exclude anything)
+source.exclude_dirs = tests, bin, .buildozer, .git, .github
+
+# (list) List of exclusions using pattern matching
+source.exclude_patterns = license,images/originals/*
+
 # (str) Application versioning (method 1)
 version = 0.1
 
@@ -57,6 +66,60 @@ fullscreen = 0
 
 # (str) Supported archs
 android.archs = arm64-v8a
+
+# (bool) Enable Android auto backup feature (Android API >= 23)
+android.allow_backup = False
+
+# (str) XML file for custom backup rules (Android API >= 31)
+# android.backup_rules =
+
+# (bool) If True, then skip trying to update the Android sdk
+# This can be forced by setting the `BUILDOZER_ANDROID_SKIP_UPDATE` environment variable to `1`
+android.skip_update = True
+
+# (bool) If True, then automatically accept SDK license
+# This can be forced by setting the `BUILDOZER_ANDROID_ACCEPT_SDK_LICENSE` environment variable to `y`
+android.accept_sdk_license = True
+
+# (list) Gradle dependencies to add
+# android.gradle_dependencies =
+
+# (bool) Enable AndroidX support
+# android.enable_androidx = False
+
+# (list) add java compile options
+# android.add_compile_options = "sourceCompatibility = 1.8", "targetCompatibility = 1.8"
+
+# (list) Gradle repositories to add (can be necessary for some gradle dependencies)
+# android.gradle_repositories =
+
+# (str) python-for-android branch to use, defaults to master
+# p4a.branch = master
+
+# (str) python-for-android git clone directory (if empty, it will be automatically cloned from github)
+# p4a.source_dir =
+
+# (str) The directory in which python-for-android should look for your own build recipes (if any)
+# p4a.local_recipes =
+
+# (str) Filename to the hook for p4a
+# p4a.hook =
+
+# (str) Bootstrap to use for android builds
+# p4a.bootstrap = sdl2
+
+# (int) port number to specify an explicit --port= p4a argument (eg for bootstrap flask)
+# p4a.port =
+
+# Control passing the --use-setup-py vs --ignore-setup-py to p4a
+# "in the future" --use-setup-py is going to be the default behaviour in p4a, right now it is not
+# Setting this to false will pass --ignore-setup-py, true will pass --use-setup-py
+# NOTE: this is general setuptools integration, having pyproject.toml is enough, no need to generate
+# setup.py if you're using Poetry, but you need to add "toml" to source.include_exts.
+# p4a.setup_py = false
+
+# (str) python-for-android URL to use for checkout
+# p4a.url =
 
 [buildozer]
 
