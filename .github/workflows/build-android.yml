@@ -31,19 +31,26 @@ jobs:
         python -m pip install --upgrade pip
         pip install buildozer cython==0.29.36
 
-    - name: Configure Buildozer
+    - name: Verify buildozer.spec
       run: |
-        echo "[buildozer]" > buildozer.spec
-        echo "log_level = 2" >> buildozer.spec
-        echo "warn_on_root = 1" >> buildozer.spec
+        echo "=== buildozer.spec ==="
+        cat buildozer.spec
+        echo "\n===================="
 
     - name: Build with Buildozer
       run: |
+        # Initialize buildozer and accept all licenses
+        yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
         buildozer -v android debug
       env:
         ANDROID_HOME: /usr/local/lib/android/sdk
         ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/25b
         PATH: ${{ env.PATH }}:/usr/local/lib/android/sdk/cmdline-tools/latest/bin
+        BUILD_WITH_NDK_DIR: /usr/local/lib/android/sdk/ndk/25b
+
+    - name: List build artifacts
+      run: |
+        ls -la bin/
 
     - name: Upload APK
       if: success()
