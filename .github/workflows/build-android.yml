@@ -26,6 +26,23 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y git zip unzip openjdk-17-jdk wget
 
+    - name: Set up Android SDK
+      run: |
+        # Accept licenses
+        mkdir -p ~/.android
+        touch ~/.android/repositories.cfg
+        
+        # Update SDK tools and accept licenses
+        yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --update
+        yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+        
+        # Install required SDK components
+        $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager \
+          "platform-tools" \
+          "platforms;android-33" \
+          "build-tools;33.0.0" \
+          "ndk;25b"
+
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
@@ -39,14 +56,16 @@ jobs:
 
     - name: Build with Buildozer
       run: |
-        # Initialize buildozer and accept all licenses
-        yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
+        # Set environment variables
+        export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
+        export ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk/25b
+        export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin
+        
+        # Run buildozer with debug info
         buildozer -v android debug
-      env:
-        ANDROID_HOME: /usr/local/lib/android/sdk
-        ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/25b
-        PATH: ${{ env.PATH }}:/usr/local/lib/android/sdk/cmdline-tools/latest/bin
-        BUILD_WITH_NDK_DIR: /usr/local/lib/android/sdk/ndk/25b
+        
+        # List the built APK
+        ls -la bin/
 
     - name: List build artifacts
       run: |
