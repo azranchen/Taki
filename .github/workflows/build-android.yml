@@ -24,83 +24,7 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y git zip unzip openjdk-17-jdk wget
-
-    - name: Set up Android SDK and NDK
-      env:
-        ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-        ANDROID_HOME: /usr/local/lib/android/sdk
-      run: |
-        # Create required directories
-        mkdir -p $ANDROID_SDK_ROOT
-        cd $ANDROID_SDK_ROOT
-        
-        # Clean up any existing cmdline-tools
-        rm -rf cmdline-tools cmdline-tools.zip
-        
-        # Download and extract command line tools
-        echo "Downloading command line tools..."
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-        unzip -q cmdline-tools.zip -d cmdline-tools
-        mkdir -p cmdline-tools/latest
-        mv cmdline-tools/cmdline-tools/* cmdline-tools/latest/
-        rm -rf cmdline-tools.zip cmdline-tools/cmdline-tools
-        
-        # Add to PATH
-        export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin
-        
-        # Accept licenses
-        yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
-        
-        # Install required components
-        sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
-          "platform-tools" \
-          "platforms;android-33" \
-          "build-tools;33.0.3" \
-          "cmdline-tools;latest" \
-          "tools"
-        
-        # Verify build-tools installation
-        echo "=== Verifying build-tools installation ==="
-        BUILD_TOOLS_DIR="$ANDROID_SDK_ROOT/build-tools/33.0.3"
-        if [ -d "$BUILD_TOOLS_DIR" ]; then
-          echo "Build tools found at: $BUILD_TOOLS_DIR"
-          ls -la "$BUILD_TOOLS_DIR"
-        else
-          echo "ERROR: Build tools not found at $BUILD_TOOLS_DIR"
-          echo "Available versions:"
-          ls -la "$ANDROID_SDK_ROOT/build-tools" || echo "No build-tools directory found"
-          exit 1
-        fi
-        
-        # Verify AIDL is available
-        echo "=== Verifying AIDL installation ==="
-        AIDL_PATH="$BUILD_TOOLS_DIR/aidl"
-        if [ -f "$AIDL_PATH" ]; then
-          echo "AIDL found at: $AIDL_PATH"
-          chmod +x "$AIDL_PATH"
-          echo "AIDL version: $($AIDL_PATH --version || echo 'Could not get version')"
-        else
-          echo "ERROR: AIDL not found in build-tools!"
-          find "$ANDROID_SDK_ROOT" -name aidl || echo "AIDL not found in SDK"
-          exit 1
-        fi
-        
-        # Ensure build-tools are in PATH
-        export PATH=$PATH:$BUILD_TOOLS_DIR
-        
-        # Manually download and install NDK 25b
-        echo "Downloading NDK 25b..."
-        mkdir -p $ANDROID_SDK_ROOT/ndk
-        wget -q https://dl.google.com/android/repository/android-ndk-r25b-linux.zip -O ndk.zip
-        unzip -q ndk.zip -d $ANDROID_SDK_ROOT/ndk
-        mv $ANDROID_SDK_ROOT/ndk/android-ndk-r25b $ANDROID_SDK_ROOT/ndk/25b
-        rm ndk.zip
-        
-        # Set environment variables
-        echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-        echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/25b" >> $GITHUB_ENV
-        echo "PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_ENV
+        sudo apt-get install -y git zip unzip openjdk-17-jdk wget autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
 
     - name: Install Python dependencies
       run: |
@@ -115,26 +39,11 @@ jobs:
 
     - name: Build with Buildozer
       run: |
-        # Set environment variables
-        export ANDROID_SDK_ROOT=${{ env.ANDROID_SDK_ROOT }}
-        export ANDROID_NDK_HOME=${{ env.ANDROID_NDK_HOME }}
-        
-        # Verify environment
-        echo "=== Environment Variables ==="
-        echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
-        echo "ANDROID_NDK_HOME: $ANDROID_NDK_HOME"
-        echo "PATH: $PATH"
-        
-        # Verify build-tools
-        echo "=== Build Tools ==="
-        ls -la $ANDROID_SDK_ROOT/build-tools/
+        # Accept all licenses upfront
+        yes | buildozer android debug || true
         
         # Run buildozer with debug info
         buildozer -v android debug
-        
-        # List the built APK
-        echo "=== Build Artifacts ==="
-        ls -la bin/
 
     - name: List build artifacts
       run: |
