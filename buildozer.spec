@@ -69,7 +69,7 @@ android.allow_backup = False
 
 # (bool) If True, then skip trying to update the Android sdk
 # This can be forced by setting the `BUILDOZER_ANDROID_SKIP_UPDATE` environment variable to `1`
-android.skip_update = True
+android.skip_update = False
 
 # (bool) If True, then automatically accept SDK license
 # This can be forced by setting the `BUILDOZER_ANDROID_ACCEPT_SDK_LICENSE` environment variable to `y`
