@@ -15,8 +15,8 @@ import tempfile
 
 class PlayerFrame(BoxLayout):
     def __init__(self, index, player_name, on_buy_callback, on_log_callback, **kwargs):
-        super().__init__(orientation='vertical', spacing=dp(5), size_hint_y=None, padding=dp(10), **kwargs)
-        self.height = dp(150)
+        super().__init__(orientation='vertical', spacing=dp(3), size_hint_y=None, padding=dp(5), **kwargs)
+        self.height = dp(90)
 
         self.total_buy = 0
         self.player_name = player_name
@@ -26,41 +26,41 @@ class PlayerFrame(BoxLayout):
         # Display indexed and capitalized player name
         formatted_name = f"{index}. {player_name.capitalize()}"
 
-        # Player name header
-        name_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(40))
-        self.label_name = Label(text=formatted_name, font_size=sp(18), bold=True, halign='left')
+        # Row 1: Name, Buy input, Buy button, Total
+        row1 = BoxLayout(orientation='horizontal', spacing=dp(3), size_hint_y=None, height=dp(40))
+        self.label_name = Label(text=formatted_name, font_size=sp(14), bold=True, size_hint_x=0.25, halign='left')
         self.label_name.bind(size=self.label_name.setter('text_size'))
-        name_layout.add_widget(self.label_name)
-        self.add_widget(name_layout)
-
-        # Buy-in row
-        buy_layout = BoxLayout(orientation='horizontal', spacing=dp(5), size_hint_y=None, height=dp(45))
-        buy_layout.add_widget(Label(text="Buy:", size_hint_x=0.2, font_size=sp(14)))
-        self.input_buy = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.3, font_size=sp(16))
+        row1.add_widget(self.label_name)
+        
+        self.input_buy = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.2, font_size=sp(14))
         self.input_buy.bind(focus=self.on_focus_buy)
-        buy_layout.add_widget(self.input_buy)
-        self.button_buy = Button(text="Buy", size_hint_x=0.25, font_size=sp(14))
+        row1.add_widget(self.input_buy)
+        
+        self.button_buy = Button(text="Buy", size_hint_x=0.2, font_size=sp(12))
         self.button_buy.bind(on_press=self.calculate_buy)
-        buy_layout.add_widget(self.button_buy)
-        buy_layout.add_widget(Label(text="Total:", size_hint_x=0.2, font_size=sp(14)))
-        self.label_total_buy = Label(text="0", size_hint_x=0.2, font_size=sp(16), bold=True)
-        buy_layout.add_widget(self.label_total_buy)
-        self.add_widget(buy_layout)
+        row1.add_widget(self.button_buy)
+        
+        row1.add_widget(Label(text="Total:", size_hint_x=0.15, font_size=sp(12)))
+        self.label_total_buy = Label(text="0", size_hint_x=0.2, font_size=sp(14), bold=True)
+        row1.add_widget(self.label_total_buy)
+        self.add_widget(row1)
 
-        # Debt and Chips row
-        values_layout = BoxLayout(orientation='horizontal', spacing=dp(5), size_hint_y=None, height=dp(45))
-        values_layout.add_widget(Label(text="Debt:", size_hint_x=0.2, font_size=sp(14)))
-        self.input_debt = TextInput(text="0", input_filter="int", multiline=False, size_hint_x=0.3, font_size=sp(16))
+        # Row 2: Debt, Chips, Sum
+        row2 = BoxLayout(orientation='horizontal', spacing=dp(3), size_hint_y=None, height=dp(40))
+        row2.add_widget(Label(text="Debt:", size_hint_x=0.15, font_size=sp(12)))
+        self.input_debt = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.25, font_size=sp(14))
         self.input_debt.bind(focus=self.on_focus_debt)
-        values_layout.add_widget(self.input_debt)
-        values_layout.add_widget(Label(text="Chips:", size_hint_x=0.2, font_size=sp(14)))
-        self.input_chips = TextInput(text="0", input_filter="int", multiline=False, size_hint_x=0.3, font_size=sp(16))
+        row2.add_widget(self.input_debt)
+        
+        row2.add_widget(Label(text="Chips:", size_hint_x=0.15, font_size=sp(12)))
+        self.input_chips = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.25, font_size=sp(14))
         self.input_chips.bind(focus=self.on_focus_chips)
-        values_layout.add_widget(self.input_chips)
-        values_layout.add_widget(Label(text="Sum:", size_hint_x=0.15, font_size=sp(14)))
-        self.label_sum = Label(text="0", size_hint_x=0.2, font_size=sp(16), bold=True)
-        values_layout.add_widget(self.label_sum)
-        self.add_widget(values_layout)
+        row2.add_widget(self.input_chips)
+        
+        row2.add_widget(Label(text="Sum:", size_hint_x=0.1, font_size=sp(12)))
+        self.label_sum = Label(text="0", size_hint_x=0.2, font_size=sp(14), bold=True)
+        row2.add_widget(self.label_sum)
+        self.add_widget(row2)
 
     def on_focus_buy(self, instance, value):
         """Clear text when focused for easy input"""
@@ -155,7 +155,7 @@ class MainApp(App):
 
         # Scrollable area for players
         self.scroll = ScrollView(size_hint=(1, 1))
-        self.players_layout = GridLayout(cols=1, spacing=dp(10), size_hint_y=None, padding=dp(5))
+        self.players_layout = GridLayout(cols=1, spacing=dp(5), size_hint_y=None, padding=dp(3))
         self.players_layout.bind(minimum_height=self.players_layout.setter('height'))
         self.scroll.add_widget(self.players_layout)
         main_layout.add_widget(self.scroll)
