@@ -27,12 +27,12 @@ class PlayerFrame(BoxLayout):
         formatted_name = f"{index}. {player_name.capitalize()}"
 
         # Row 1: Name, Buy input, Buy button, Total
-        row1 = BoxLayout(orientation='horizontal', spacing=dp(3), size_hint_y=None, height=dp(40))
+        row1 = BoxLayout(orientation='horizontal', spacing=dp(3), size_hint_y=None, height=dp(30))
         self.label_name = Label(text=formatted_name, font_size=sp(14), bold=True, size_hint_x=0.25, halign='left')
         self.label_name.bind(size=self.label_name.setter('text_size'))
         row1.add_widget(self.label_name)
         
-        self.input_buy = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.2, font_size=sp(14))
+        self.input_buy = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.10, font_size=sp(14))
         self.input_buy.bind(focus=self.on_focus_buy)
         row1.add_widget(self.input_buy)
         
@@ -46,14 +46,14 @@ class PlayerFrame(BoxLayout):
         self.add_widget(row1)
 
         # Row 2: Debt, Chips, Sum
-        row2 = BoxLayout(orientation='horizontal', spacing=dp(3), size_hint_y=None, height=dp(40))
+        row2 = BoxLayout(orientation='horizontal', spacing=dp(3), size_hint_y=None, height=dp(30))
         row2.add_widget(Label(text="Debt:", size_hint_x=0.15, font_size=sp(12)))
-        self.input_debt = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.25, font_size=sp(14))
+        self.input_debt = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.10, font_size=sp(14))
         self.input_debt.bind(focus=self.on_focus_debt)
         row2.add_widget(self.input_debt)
         
         row2.add_widget(Label(text="Chips:", size_hint_x=0.15, font_size=sp(12)))
-        self.input_chips = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.25, font_size=sp(14))
+        self.input_chips = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.10, font_size=sp(14))
         self.input_chips.bind(focus=self.on_focus_chips)
         row2.add_widget(self.input_chips)
         
