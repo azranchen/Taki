@@ -6,6 +6,8 @@ from kivy.uix.button import Button
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
+from kivy.metrics import dp, sp
+from kivy.core.window import Window
 from datetime import datetime
 import os
 import tempfile
@@ -13,7 +15,8 @@ import tempfile
 
 class PlayerFrame(BoxLayout):
     def __init__(self, index, player_name, on_buy_callback, on_log_callback, **kwargs):
-        super().__init__(orientation='horizontal', spacing=10, size_hint_y=None, height=40, **kwargs)
+        super().__init__(orientation='vertical', spacing=dp(5), size_hint_y=None, padding=dp(10), **kwargs)
+        self.height = dp(150)
 
         self.total_buy = 0
         self.player_name = player_name
@@ -23,36 +26,62 @@ class PlayerFrame(BoxLayout):
         # Display indexed and capitalized player name
         formatted_name = f"{index}. {player_name.capitalize()}"
 
-        self.label_name = Label(text=formatted_name, size_hint_x=0.15)
-        self.input_buy = TextInput(text="0", input_filter="int", multiline=False, size_hint_x=0.1)
-        self.button_buy = Button(text="Buy", size_hint_x=0.1)
+        # Player name header
+        name_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(40))
+        self.label_name = Label(text=formatted_name, font_size=sp(18), bold=True, halign='left')
+        self.label_name.bind(size=self.label_name.setter('text_size'))
+        name_layout.add_widget(self.label_name)
+        self.add_widget(name_layout)
+
+        # Buy-in row
+        buy_layout = BoxLayout(orientation='horizontal', spacing=dp(5), size_hint_y=None, height=dp(45))
+        buy_layout.add_widget(Label(text="Buy:", size_hint_x=0.2, font_size=sp(14)))
+        self.input_buy = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.3, font_size=sp(16))
+        self.input_buy.bind(focus=self.on_focus_buy)
+        buy_layout.add_widget(self.input_buy)
+        self.button_buy = Button(text="Buy", size_hint_x=0.25, font_size=sp(14))
         self.button_buy.bind(on_press=self.calculate_buy)
+        buy_layout.add_widget(self.button_buy)
+        buy_layout.add_widget(Label(text="Total:", size_hint_x=0.2, font_size=sp(14)))
+        self.label_total_buy = Label(text="0", size_hint_x=0.2, font_size=sp(16), bold=True)
+        buy_layout.add_widget(self.label_total_buy)
+        self.add_widget(buy_layout)
 
-        self.label_total_buy = Label(text="0", size_hint_x=0.1)
-        self.input_debt = TextInput(text="0", input_filter="int", multiline=False, size_hint_x=0.1)
-        self.input_chips = TextInput(text="0", input_filter="int", multiline=False, size_hint_x=0.1)
-        self.label_sum = Label(text="0", size_hint_x=0.1)
+        # Debt and Chips row
+        values_layout = BoxLayout(orientation='horizontal', spacing=dp(5), size_hint_y=None, height=dp(45))
+        values_layout.add_widget(Label(text="Debt:", size_hint_x=0.2, font_size=sp(14)))
+        self.input_debt = TextInput(text="0", input_filter="int", multiline=False, size_hint_x=0.3, font_size=sp(16))
+        self.input_debt.bind(focus=self.on_focus_debt)
+        values_layout.add_widget(self.input_debt)
+        values_layout.add_widget(Label(text="Chips:", size_hint_x=0.2, font_size=sp(14)))
+        self.input_chips = TextInput(text="0", input_filter="int", multiline=False, size_hint_x=0.3, font_size=sp(16))
+        self.input_chips.bind(focus=self.on_focus_chips)
+        values_layout.add_widget(self.input_chips)
+        values_layout.add_widget(Label(text="Sum:", size_hint_x=0.15, font_size=sp(14)))
+        self.label_sum = Label(text="0", size_hint_x=0.2, font_size=sp(16), bold=True)
+        values_layout.add_widget(self.label_sum)
+        self.add_widget(values_layout)
 
-        self.add_widget(self.label_name)
-        self.add_widget(Label(text="Buy:", size_hint_x=0.05))
-        self.add_widget(self.input_buy)
-        self.add_widget(self.button_buy)
-
-        self.add_widget(Label(text="Total Buy:", size_hint_x=0.1))
-        self.add_widget(self.label_total_buy)
-
-        self.add_widget(Label(text="Debt:", size_hint_x=0.07))
-        self.add_widget(self.input_debt)
-
-        self.add_widget(Label(text="Chips:", size_hint_x=0.07))
-        self.add_widget(self.input_chips)
-
-        self.add_widget(Label(text="Sum:", size_hint_x=0.05))
-        self.add_widget(self.label_sum)
+    def on_focus_buy(self, instance, value):
+        """Clear text when focused for easy input"""
+        if value and instance.text == "":  # When focused and empty
+            pass  # Do nothing, let user type
+        elif value:  # When focused with text
+            instance.select_all()
+    
+    def on_focus_debt(self, instance, value):
+        """Select all text when focused for easy replacement"""
+        if value:  # When focused
+            instance.select_all()
+    
+    def on_focus_chips(self, instance, value):
+        """Select all text when focused for easy replacement"""
+        if value:  # When focused
+            instance.select_all()
 
     def calculate_buy(self, instance):
         try:
-            buy_value = int(self.input_buy.text)
+            buy_value = int(self.input_buy.text) if self.input_buy.text else 0
         except ValueError:
             buy_value = 0
         
@@ -62,17 +91,17 @@ class PlayerFrame(BoxLayout):
             # Log before resetting input
             if self.on_log_callback:
                 self.on_log_callback(f"{self.player_name.capitalize()} bought in for {buy_value} (Total: {self.total_buy})")
-            self.input_buy.text = "0"
+            self.input_buy.text = ""  # Clear instead of setting to "0"
             if self.on_buy_callback:
                 self.on_buy_callback()
 
     def calculate_sum(self, log_changes=False):
         try:
-            chips = int(self.input_chips.text)
+            chips = int(self.input_chips.text) if self.input_chips.text else 0
         except ValueError:
             chips = 0
         try:
-            debt = int(self.input_debt.text)
+            debt = int(self.input_debt.text) if self.input_debt.text else 0
         except ValueError:
             debt = 0
         total = chips - debt
@@ -94,21 +123,21 @@ class MainApp(App):
         self.log_file_path = os.path.join(tempfile.gettempdir(), 'taki_game_log.txt')
         self.init_log_file()
 
-        self.total_buy_label = Label(text="0", size_hint_x=0.2)
-        self.total_chips_label = Label(text="0", size_hint_x=0.2)
+        self.total_buy_label = Label(text="0", font_size=sp(18), bold=True)
+        self.total_chips_label = Label(text="0", font_size=sp(18), bold=True)
 
         # Create tabbed panel
-        tabbed_panel = TabbedPanel(do_default_tab=False)
+        tabbed_panel = TabbedPanel(do_default_tab=False, tab_height=dp(50))
         
         # Game tab
         game_tab = TabbedPanelItem(text='Game')
-        main_layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        main_layout = BoxLayout(orientation='vertical', padding=dp(10), spacing=dp(10))
 
         # Date layout aligned to left
-        date_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=40)
+        date_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(50))
         current_date = datetime.now().strftime("%Y-%m-%d")
-        date_label = Label(text="Date:", size_hint_x=0.1, halign='left', valign='middle')
-        self.date_display = Label(text=current_date, size_hint_x=0.2, halign='left', valign='middle')
+        date_label = Label(text="Date:", size_hint_x=0.2, font_size=sp(16), halign='left', valign='middle')
+        self.date_display = Label(text=current_date, size_hint_x=0.8, font_size=sp(16), halign='left', valign='middle')
         for widget in [date_label, self.date_display]:
             widget.bind(size=widget.setter('text_size'))
         date_layout.add_widget(date_label)
@@ -116,32 +145,38 @@ class MainApp(App):
         main_layout.add_widget(date_layout)
 
         # Players input row
-        player_input_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=40, spacing=10)
-        self.player_name_input = TextInput(hint_text="Enter player name", multiline=False)
-        self.add_player_button = Button(text="Add Player")
+        player_input_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(60), spacing=dp(10))
+        self.player_name_input = TextInput(hint_text="Enter player name", multiline=False, font_size=sp(16), size_hint_x=0.6)
+        self.add_player_button = Button(text="Add Player", font_size=sp(16), size_hint_x=0.4)
         self.add_player_button.bind(on_press=self.add_player)
-        player_input_layout.add_widget(Label(text="Players:", size_hint_x=0.15))
         player_input_layout.add_widget(self.player_name_input)
         player_input_layout.add_widget(self.add_player_button)
         main_layout.add_widget(player_input_layout)
 
         # Scrollable area for players
         self.scroll = ScrollView(size_hint=(1, 1))
-        self.players_layout = GridLayout(cols=1, spacing=5, size_hint_y=None)
+        self.players_layout = GridLayout(cols=1, spacing=dp(10), size_hint_y=None, padding=dp(5))
         self.players_layout.bind(minimum_height=self.players_layout.setter('height'))
         self.scroll.add_widget(self.players_layout)
         main_layout.add_widget(self.scroll)
 
         # Total Buy-Ins and Chips Summary
-        summary_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=40, spacing=20)
-        summary_layout.add_widget(Label(text="Total Buy-Ins:", size_hint_x=0.2))
-        summary_layout.add_widget(self.total_buy_label)
-        summary_layout.add_widget(Label(text="Total Chips:", size_hint_x=0.2))
-        summary_layout.add_widget(self.total_chips_label)
+        summary_layout = BoxLayout(orientation='vertical', size_hint_y=None, height=dp(100), spacing=dp(5), padding=dp(10))
+        
+        buy_summary = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(40))
+        buy_summary.add_widget(Label(text="Total Buy-Ins:", font_size=sp(16), halign='left'))
+        buy_summary.add_widget(self.total_buy_label)
+        summary_layout.add_widget(buy_summary)
+        
+        chips_summary = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(40))
+        chips_summary.add_widget(Label(text="Total Chips:", font_size=sp(16), halign='left'))
+        chips_summary.add_widget(self.total_chips_label)
+        summary_layout.add_widget(chips_summary)
+        
         main_layout.add_widget(summary_layout)
 
         # Calculate button
-        self.calculate_button = Button(text="Calculate", size_hint_y=None, height=50)
+        self.calculate_button = Button(text="Calculate", size_hint_y=None, height=dp(60), font_size=sp(18))
         self.calculate_button.bind(on_press=self.calculate_all)
         main_layout.add_widget(self.calculate_button)
         
@@ -150,14 +185,14 @@ class MainApp(App):
         
         # Log tab
         self.log_tab = TabbedPanelItem(text='Log')
-        log_layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        log_layout = BoxLayout(orientation='vertical', padding=dp(10), spacing=dp(10))
         
         # Show log file path
-        log_path_label = Label(text=f"Log file: {self.log_file_path}", size_hint_y=None, height=30, font_size='10sp')
+        log_path_label = Label(text=f"Log: {self.log_file_path}", size_hint_y=None, height=dp(40), font_size=sp(12))
         log_layout.add_widget(log_path_label)
         
         # Refresh button for log
-        refresh_button = Button(text="Refresh Log", size_hint_y=None, height=50)
+        refresh_button = Button(text="Refresh Log", size_hint_y=None, height=dp(60), font_size=sp(16))
         refresh_button.bind(on_press=self.refresh_log)
         log_layout.add_widget(refresh_button)
         
@@ -168,7 +203,8 @@ class MainApp(App):
             multiline=True,
             size_hint=(1, 1),
             background_color=(0.1, 0.1, 0.1, 1),
-            foreground_color=(1, 1, 1, 1)
+            foreground_color=(1, 1, 1, 1),
+            font_size=sp(14)
         )
         log_layout.add_widget(self.log_display)
         
