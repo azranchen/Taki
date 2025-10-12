@@ -121,7 +121,7 @@ class PlayerFrame(BoxLayout):
 class MainApp(App):
     def build(self):
         # Set window size to simulate mobile screen (comment out for desktop use)
-        Window.size = (360, 640)  # Typical mobile screen in portrait
+        #Window.size = (360, 640)  # Typical mobile screen in portrait
         
         self.players = []
         self.log_file_path = os.path.join(tempfile.gettempdir(), 'taki_game_log.txt')
