@@ -16,7 +16,7 @@ import tempfile
 class PlayerFrame(BoxLayout):
     def __init__(self, index, player_name, on_buy_callback, on_log_callback, **kwargs):
         super().__init__(orientation='vertical', spacing=dp(3), size_hint_y=None, padding=dp(5), **kwargs)
-        self.height = dp(90)
+        self.height = dp(60)
 
         self.total_buy = 0
         self.player_name = player_name
@@ -26,39 +26,40 @@ class PlayerFrame(BoxLayout):
         # Display indexed and capitalized player name
         formatted_name = f"{index}. {player_name.capitalize()}"
 
-        # Row 1: Name, Buy input, Buy button, Total
-        row1 = BoxLayout(orientation='horizontal', spacing=dp(3), size_hint_y=None, height=dp(30))
-        self.label_name = Label(text=formatted_name, font_size=sp(14), bold=True, size_hint_x=0.25, halign='left')
+        # Row 1: Name, Buy input, Buy button, Total, Debt, Chips
+        row1 = BoxLayout(orientation='horizontal', spacing=dp(2), size_hint_y=None, height=dp(30))
+        self.label_name = Label(text=formatted_name, font_size=sp(12), bold=True, size_hint_x=0.15, halign='left')
         self.label_name.bind(size=self.label_name.setter('text_size'))
         row1.add_widget(self.label_name)
         
-        self.input_buy = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.10, font_size=sp(14))
+        self.input_buy = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.12, font_size=sp(12))
         self.input_buy.bind(focus=self.on_focus_buy)
         row1.add_widget(self.input_buy)
         
-        self.button_buy = Button(text="Buy", size_hint_x=0.2, font_size=sp(12))
+        self.button_buy = Button(text="Buy", size_hint_x=0.12, font_size=sp(10))
         self.button_buy.bind(on_press=self.calculate_buy)
         row1.add_widget(self.button_buy)
         
-        row1.add_widget(Label(text="Total:", size_hint_x=0.15, font_size=sp(12)))
-        self.label_total_buy = Label(text="0", size_hint_x=0.2, font_size=sp(14), bold=True)
+        row1.add_widget(Label(text="T:", size_hint_x=0.08, font_size=sp(10)))
+        self.label_total_buy = Label(text="0", size_hint_x=0.10, font_size=sp(12), bold=True)
         row1.add_widget(self.label_total_buy)
+        
+        row1.add_widget(Label(text="D:", size_hint_x=0.08, font_size=sp(10)))
+        self.input_debt = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.12, font_size=sp(12))
+        self.input_debt.bind(focus=self.on_focus_debt)
+        row1.add_widget(self.input_debt)
+        
+        row1.add_widget(Label(text="C:", size_hint_x=0.08, font_size=sp(10)))
+        self.input_chips = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.12, font_size=sp(12))
+        self.input_chips.bind(focus=self.on_focus_chips)
+        row1.add_widget(self.input_chips)
         self.add_widget(row1)
 
-        # Row 2: Debt, Chips, Sum
-        row2 = BoxLayout(orientation='horizontal', spacing=dp(3), size_hint_y=None, height=dp(30))
-        row2.add_widget(Label(text="Debt:", size_hint_x=0.15, font_size=sp(12)))
-        self.input_debt = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.10, font_size=sp(14))
-        self.input_debt.bind(focus=self.on_focus_debt)
-        row2.add_widget(self.input_debt)
-        
-        row2.add_widget(Label(text="Chips:", size_hint_x=0.15, font_size=sp(12)))
-        self.input_chips = TextInput(hint_text="0", input_filter="int", multiline=False, size_hint_x=0.10, font_size=sp(14))
-        self.input_chips.bind(focus=self.on_focus_chips)
-        row2.add_widget(self.input_chips)
-        
-        row2.add_widget(Label(text="Sum:", size_hint_x=0.1, font_size=sp(12)))
-        self.label_sum = Label(text="0", size_hint_x=0.2, font_size=sp(14), bold=True)
+        # Row 2: Sum only
+        row2 = BoxLayout(orientation='horizontal', spacing=dp(2), size_hint_y=None, height=dp(25))
+        row2.add_widget(Label(text="Sum:", size_hint_x=0.2, font_size=sp(12), halign='left'))
+        self.label_sum = Label(text="0", size_hint_x=0.8, font_size=sp(14), bold=True, halign='left')
+        self.label_sum.bind(size=self.label_sum.setter('text_size'))
         row2.add_widget(self.label_sum)
         self.add_widget(row2)
 
@@ -119,6 +120,9 @@ class PlayerFrame(BoxLayout):
 
 class MainApp(App):
     def build(self):
+        # Set window size to simulate mobile screen (comment out for desktop use)
+        Window.size = (360, 640)  # Typical mobile screen in portrait
+        
         self.players = []
         self.log_file_path = os.path.join(tempfile.gettempdir(), 'taki_game_log.txt')
         self.init_log_file()
@@ -145,9 +149,9 @@ class MainApp(App):
         main_layout.add_widget(date_layout)
 
         # Players input row
-        player_input_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(60), spacing=dp(10))
-        self.player_name_input = TextInput(hint_text="Enter player name", multiline=False, font_size=sp(16), size_hint_x=0.6)
-        self.add_player_button = Button(text="Add Player", font_size=sp(16), size_hint_x=0.4)
+        player_input_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(40), spacing=dp(5))
+        self.player_name_input = TextInput(hint_text="Player name", multiline=False, font_size=sp(14), size_hint_x=0.5)
+        self.add_player_button = Button(text="Add", font_size=sp(14), size_hint_x=0.3)
         self.add_player_button.bind(on_press=self.add_player)
         player_input_layout.add_widget(self.player_name_input)
         player_input_layout.add_widget(self.add_player_button)
