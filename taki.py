@@ -6,11 +6,13 @@ from kivy.uix.button import Button
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
+from kivy.uix.popup import Popup
 from kivy.metrics import dp, sp
-from kivy.core.window import Window
+#from kivy.core.window import Window
 from datetime import datetime
 import os
 import tempfile
+import json
 
 
 class PlayerFrame(BoxLayout):
@@ -116,6 +118,23 @@ class PlayerFrame(BoxLayout):
 
     def get_total_buy(self):
         return self.total_buy
+    
+    def get_player_data(self):
+        """Get player data for saving"""
+        return {
+            'name': self.player_name,
+            'total_buy': self.total_buy,
+            'debt': self.input_debt.text,
+            'chips': self.input_chips.text
+        }
+    
+    def set_player_data(self, data):
+        """Set player data from loaded data"""
+        self.total_buy = data.get('total_buy', 0)
+        self.label_total_buy.text = str(self.total_buy)
+        self.input_debt.text = data.get('debt', '')
+        self.input_chips.text = data.get('chips', '')
+        self.calculate_sum(log_changes=False)
 
 
 class MainApp(App):
@@ -125,6 +144,7 @@ class MainApp(App):
         
         self.players = []
         self.log_file_path = os.path.join(tempfile.gettempdir(), 'taki_game_log.txt')
+        self.save_file_path = os.path.join(tempfile.gettempdir(), 'taki_game_data.json')
         self.init_log_file()
 
         self.total_buy_label = Label(text="0", font_size=sp(18), bold=True)
@@ -161,6 +181,7 @@ class MainApp(App):
             font_size=sp(12),
             write_tab=False
         )
+        self.comments_input.bind(focus=self.on_comments_unfocus)
         comments_section.add_widget(comments_label)
         comments_section.add_widget(self.comments_input)
         
@@ -199,10 +220,20 @@ class MainApp(App):
         
         main_layout.add_widget(summary_layout)
 
+        # Buttons layout
+        buttons_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(60), spacing=dp(5))
+        
         # Calculate button
-        self.calculate_button = Button(text="Calculate", size_hint_y=None, height=dp(60), font_size=sp(18))
+        self.calculate_button = Button(text="Calculate", size_hint_x=0.6, font_size=sp(18))
         self.calculate_button.bind(on_press=self.calculate_all)
-        main_layout.add_widget(self.calculate_button)
+        buttons_layout.add_widget(self.calculate_button)
+        
+        # Clear All Data button
+        self.clear_button = Button(text="Clear All", size_hint_x=0.4, font_size=sp(16), background_color=(0.8, 0.2, 0.2, 1))
+        self.clear_button.bind(on_press=self.confirm_clear_data)
+        buttons_layout.add_widget(self.clear_button)
+        
+        main_layout.add_widget(buttons_layout)
         
         game_tab.add_widget(main_layout)
         tabbed_panel.add_widget(game_tab)
@@ -238,6 +269,9 @@ class MainApp(App):
         # Bind tab switch event to refresh log
         self.log_tab.bind(on_press=self.on_log_tab_press)
         tabbed_panel.bind(current_tab=self.on_tab_switch)
+        
+        # Load saved data if exists
+        self.load_game_data()
         
         return tabbed_panel
 
@@ -290,6 +324,11 @@ class MainApp(App):
         if hasattr(value, 'text') and value.text == 'Log':
             self.refresh_log()
     
+    def on_comments_unfocus(self, instance, value):
+        """Save data when comments field loses focus"""
+        if not value:  # When focus is lost
+            self.save_game_data()
+    
     def add_player(self, instance):
         name = self.player_name_input.text.strip()
         if name:
@@ -300,6 +339,7 @@ class MainApp(App):
             self.player_name_input.text = ""
             self.log_event(f"Player added: {name.capitalize()}")
             self.update_total_buy()
+            self.save_game_data()
 
     def update_total_buy(self):
         total = sum(player.get_total_buy() for player in self.players)
@@ -311,6 +351,113 @@ class MainApp(App):
         self.total_chips_label.text = str(total_chips)
         self.log_event(f"Total Chips: {total_chips}")
         self.log_event(f"Total Buy-Ins: {self.total_buy_label.text}")
+        self.save_game_data()
+    
+    def save_game_data(self):
+        """Save current game state to file"""
+        try:
+            game_data = {
+                'date': self.date_display.text,
+                'comments': self.comments_input.text,
+                'players': [player.get_player_data() for player in self.players],
+                'total_buy': self.total_buy_label.text,
+                'total_chips': self.total_chips_label.text
+            }
+            with open(self.save_file_path, 'w', encoding='utf-8') as f:
+                json.dump(game_data, f, indent=2)
+            print(f"Game data saved to {self.save_file_path}")
+        except Exception as e:
+            print(f"Error saving game data: {e}")
+    
+    def load_game_data(self):
+        """Load game state from file"""
+        try:
+            if not os.path.exists(self.save_file_path):
+                print("No saved game data found")
+                return
+            
+            with open(self.save_file_path, 'r', encoding='utf-8') as f:
+                game_data = json.load(f)
+            
+            # Restore date and comments
+            if 'date' in game_data:
+                self.date_display.text = game_data['date']
+            if 'comments' in game_data:
+                self.comments_input.text = game_data['comments']
+            
+            # Restore players
+            if 'players' in game_data:
+                for player_data in game_data['players']:
+                    index = len(self.players) + 1
+                    frame = PlayerFrame(index, player_data['name'], 
+                                      on_buy_callback=self.update_total_buy, 
+                                      on_log_callback=self.log_event)
+                    frame.set_player_data(player_data)
+                    self.players_layout.add_widget(frame)
+                    self.players.append(frame)
+            
+            # Restore totals
+            if 'total_buy' in game_data:
+                self.total_buy_label.text = game_data['total_buy']
+            if 'total_chips' in game_data:
+                self.total_chips_label.text = game_data['total_chips']
+            
+            self.log_event("Game data loaded from previous session")
+            print(f"Game data loaded from {self.save_file_path}")
+        except Exception as e:
+            print(f"Error loading game data: {e}")
+    
+    def confirm_clear_data(self, instance):
+        """Show confirmation popup before clearing data"""
+        content = BoxLayout(orientation='vertical', padding=dp(10), spacing=dp(10))
+        content.add_widget(Label(text="Are you sure you want to clear all data?\nThis cannot be undone.", 
+                                font_size=sp(16), halign='center'))
+        
+        buttons = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(50), spacing=dp(10))
+        
+        popup = Popup(title='Clear All Data', content=content, size_hint=(0.8, 0.4))
+        
+        yes_button = Button(text="Yes, Clear All", background_color=(0.8, 0.2, 0.2, 1))
+        yes_button.bind(on_press=lambda x: self.clear_all_data(popup))
+        buttons.add_widget(yes_button)
+        
+        no_button = Button(text="Cancel")
+        no_button.bind(on_press=popup.dismiss)
+        buttons.add_widget(no_button)
+        
+        content.add_widget(buttons)
+        popup.open()
+    
+    def clear_all_data(self, popup):
+        """Clear all game data"""
+        try:
+            # Clear all players
+            self.players_layout.clear_widgets()
+            self.players = []
+            
+            # Reset totals
+            self.total_buy_label.text = "0"
+            self.total_chips_label.text = "0"
+            
+            # Clear comments
+            self.comments_input.text = ""
+            
+            # Reset date to today
+            self.date_display.text = datetime.now().strftime("%Y-%m-%d")
+            
+            # Delete save file
+            if os.path.exists(self.save_file_path):
+                os.remove(self.save_file_path)
+            
+            # Reinitialize log file
+            self.init_log_file()
+            
+            self.log_event("All data cleared - New game started")
+            print("All game data cleared")
+            popup.dismiss()
+        except Exception as e:
+            print(f"Error clearing data: {e}")
+            popup.dismiss()
 
 
 if __name__ == '__main__':
