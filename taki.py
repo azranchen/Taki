@@ -137,15 +137,35 @@ class MainApp(App):
         game_tab = TabbedPanelItem(text='Game')
         main_layout = BoxLayout(orientation='vertical', padding=dp(10), spacing=dp(10))
 
-        # Date layout aligned to left
-        date_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(50))
+        # Date layout with comments on the right
+        date_layout = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(80), spacing=dp(5))
+        
+        # Left side: Date
+        date_section = BoxLayout(orientation='horizontal', size_hint_x=0.4)
         current_date = datetime.now().strftime("%Y-%m-%d")
-        date_label = Label(text="Date:", size_hint_x=0.2, font_size=sp(16), halign='left', valign='middle')
-        self.date_display = Label(text=current_date, size_hint_x=0.8, font_size=sp(16), halign='left', valign='middle')
+        date_label = Label(text="Date:", size_hint_x=0.35, font_size=sp(16), halign='left', valign='middle')
+        self.date_display = Label(text=current_date, size_hint_x=0.65, font_size=sp(16), halign='left', valign='middle')
         for widget in [date_label, self.date_display]:
             widget.bind(size=widget.setter('text_size'))
-        date_layout.add_widget(date_label)
-        date_layout.add_widget(self.date_display)
+        date_section.add_widget(date_label)
+        date_section.add_widget(self.date_display)
+        
+        # Right side: Comments
+        comments_section = BoxLayout(orientation='horizontal', size_hint_x=0.6)
+        comments_label = Label(text="Comments:", size_hint_x=0.25, font_size=sp(14), halign='left', valign='middle')
+        comments_label.bind(size=comments_label.setter('text_size'))
+        self.comments_input = TextInput(
+            hint_text="Add notes here...",
+            multiline=True,
+            size_hint_x=0.75,
+            font_size=sp(12),
+            write_tab=False
+        )
+        comments_section.add_widget(comments_label)
+        comments_section.add_widget(self.comments_input)
+        
+        date_layout.add_widget(date_section)
+        date_layout.add_widget(comments_section)
         main_layout.add_widget(date_layout)
 
         # Players input row
